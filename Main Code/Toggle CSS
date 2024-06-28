@@ -1,0 +1,23 @@
+/* styles.css */
+
+body.light-mode {
+    background-color: white;
+    color: black;
+}
+
+body.dark-mode {
+    background-color: #121212;
+    color: white;
+}
+
+.card.light-mode {
+    background-color: white;
+    color: black;
+}
+
+.card.dark-mode {
+    background-color: #1e1e1e;
+    color: white;
+}
+
+/* Ensure other elements also adapt to the theme */
