@@ -1,0 +1,47 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>CodeForces User Info</title>
+    <script src="praticeJS.js" defer></script>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="stylesheet" href="toggle.css">
+</head>
+
+<body>
+    <header>
+        <div id="codeforcesheader" class="has-text-centered mt-5 mb-3">
+            <img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Codeforces_logo.svg/768px-Codeforces_logo.svg.png"
+                alt="CodeForces Icon">
+        </div>
+    </header>
+    <div class="has-text-centered mt-3">
+        <button id="theme-toggle" class="button is-info">Toggle Theme</button>
+    </div>
+    <form id="usernameform" class="box field is-grouped is-grouped-centered mt-3">
+        <div class="field is-horizontal">
+            <div class="field-label is-normal">
+                <label for="username" class="label">Username:</label>
+            </div>
+            <div class="field-body">
+                <div class="field">
+                    <p class="control">
+                        <input type="text" class="input is-rounded is-focused is-normal" id="username" name="username"
+                            placeholder="Enter UserName">
+                    </p>
+                </div>
+                <div class="field">
+                    <p class="control">
+                        <button class="button is-success is-rounded is-normal">Submit</button>
+                    </p>
+                </div>
+            </div>
+        </div>
+    </form>
+    <div id="container" class="container mt-5"></div>
+</body>
+
+</html>
