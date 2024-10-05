@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Document</title>
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bulma@1.0.0/css/bulma.min.css">
+    <style>
+        .interactive-button:hover {
+            border-color: #FFD700;
+            box-shadow: 0 0 12px #0d0d0d;
+        }
+
+        .interactive-button:focus {
+            background-color: #FFA500;
+            border-color: #FFA500;
+            box-shadow: 0 0 12px #0d0d0d;
+            outline: none !important;
+            box-shadow: 0 0 12px #FFA500 !important;
+
+        }
+
+        .interactive-button a {
+            color: inherit;
+        }
+
+        button:focus,
+        a:focus,
+        a:active {
+            outline: none !important;
+            box-shadow: none !important;
+        }
+    </style>
+</head>
+
+<body>
+    <header class="mb-5">
+        <div class="box has-text-centered">
+            <h1 class="has-text-weight-bold is-size-1">CodioScope</h1>
+        </div>
+    </header>
+
+    <div id="container" class="columns is-variable is-8 mt-5 mb-5">
+        <div class="column is-one-third is-mobile mb-4">
+            <div class="box p-4">
+                <figure class="image is-4by3">
+                    <img src="https://may55.github.io/assets/img/portfolio/leetcode-icon.png"
+                        alt="LeetCode Image">
+                </figure>
+                <div class="mt-4 has-text-centered">
+                    <button class="button is-warning interactive-button">
+                        <a href="leetcode.html">LeetCode</a>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="column is-one-third is-mobile mb-4">
+            <div class="box p-4">
+                <figure class="image is-4by3">
+                    <img src="https://art.npanuhin.me/SVG/Codeforces/Codeforces.colored.svg" alt="CodeForces Image">
+                </figure>
+                <div class="mt-4 has-text-centered">
+                    <button class="button is-link interactive-button">
+                        <a href="codeforces.html">CodeForces</a>
+                    </button>
+                </div>
+            </div>
+        </div>
+        <div class="column is-one-third is-mobile mb-4">
+            <div class="box p-4">
+                <figure class="image is-4by3">
+                    <img src="https://media.geeksforgeeks.org/wp-content/uploads/20231207115905/GFG_LOGO-removebg-preview.png"
+                        alt="GFG Image">
+                </figure>
+                <div class="mt-4 has-text-centered">
+                    <button class="button is-success interactive-button">
+                        <a href="geeksforgeeks.html">GeeksForGeeks</a>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="footer mt-5">
+        <div class="content has-text-centered">
+            All Rights Reserved
+            <br>
+            Rahul Jha
+        </div>
+    </footer>
+</body>
+
+</html>

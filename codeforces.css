@@ -1,0 +1,100 @@
+body,
+html {
+    margin: 0;
+    padding: 0;
+    box-sizing: border-box;
+    background-color: rgb(236, 193, 200);
+}
+
+/* Header styles */
+header {
+    /* background-color: #f0f0f0; */
+    background-color: rgb(226, 111, 134);
+    padding: 20px;
+    text-align: center;
+}
+
+#codeforcesheader img {
+    width: 200px;
+}
+
+/* Form styles */
+form#usernameform {
+    margin: 40px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+}
+
+input[type="text"] {
+    padding: 10px;
+    margin-right: 10px;
+    width: 200px;
+    box-sizing: border-box;
+}
+
+button#submitUsername {
+    padding: 10px 20px;
+    background-color: #007bff;
+    color: white;
+    border: none;
+    cursor: pointer;
+}
+
+/* Container styles */
+#container {
+    display: flex;
+    width: 100%;
+    margin: 10px;
+
+
+}
+
+#View1 {
+    flex: 1;
+    /* background-color: #f8f9fa; */
+    background-color: rgb(186, 223, 237);
+    padding: 20px;
+    margin: 30px;
+
+}
+
+.personalDetails {
+    display: flex;
+    align-items: left;
+
+}
+
+.userdetails {
+    margin-left: auto;
+
+}
+
+
+#additional {
+    margin-top: auto;
+}
+
+
+.OfficialDetails {
+    flex: 1;
+    padding: 20px;
+    background-color: #ffffff;
+}
+
+
+
+@media (max-width: 749px) {
+    #container {
+        flex-direction: column;
+        display: flex;
+        padding: 1px 1px;
+        margin: 20px;
+        justify-content: center;
+    }
+
+    #View1,
+    .OfficialDetails {
+        margin-top: 10px;
+    }
+}
