@@ -1,16 +1,101 @@
+async function populateTagsDropdown() {
+  const url = "https://codeforces.com/api/problemset.problems";
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+
+    if (data.status !== "OK") {
+      throw new Error("Error fetching data from Codeforces API");
+    }
+
+    // Extract all tags from the problems
+    const allTags = new Set();
+    data.result.problems.forEach((problem) => {
+      problem.tags.forEach((tag) => {
+        allTags.add(tag); // Using Set to avoid duplicates
+      });
+    });
+
+    // Get the dropdown element
+    const topicDropdown = document.getElementById("topic-dropdown");
+
+    // Create an option for each unique tag and append it to the dropdown
+    allTags.forEach((tag) => {
+      const option = document.createElement("option");
+      option.value = tag;
+      option.textContent = tag.charAt(0).toUpperCase() + tag.slice(1); // Capitalize first letter
+      topicDropdown.appendChild(option);
+    });
+  } catch (error) {
+    console.error("Error fetching tags:", error);
+  }
+}
+
+function analyzeProgress(ratingData) {
+  if (ratingData.length === 0) {
+    return "No contest data available for analysis.";
+  }
+
+  const lastFiveRatings = ratingData.slice(-5); // Get the last five contests
+  const progressData = lastFiveRatings.map((contest) => ({
+    contestName: contest.contestName,
+    oldRating: contest.oldRating,
+    newRating: contest.newRating,
+    change: contest.newRating - contest.oldRating,
+  }));
+
+  // Calculate statistics
+  const ratingChanges = progressData.map((data) => data.change);
+  const averageChange =
+    ratingChanges.reduce((a, b) => a + b, 0) / ratingChanges.length;
+  const totalOldRating = lastFiveRatings.reduce(
+    (sum, contest) => sum + contest.oldRating,
+    0
+  );
+  const averageOldRating = totalOldRating / lastFiveRatings.length;
+
+  // Create analysis content
+  let analysisHTML = `
+        <h2 class="title is-4 has-text-centered">Progress Analysis</h2>
+        <div class="box">
+            <p><strong>Average Rating Change (Last 5 Contests):</strong> ${averageChange.toFixed(
+              2
+            )}</p>
+            <p><strong>Average Old Rating (Last 5 Contests):</strong> ${averageOldRating.toFixed(
+              2
+            )}</p>
+            <h3 class="subtitle is-6">Detailed Ratings:</h3>
+            <ul>
+    `;
+
+  progressData.forEach((data) => {
+    analysisHTML += `
+            <li>
+                <strong>${data.contestName}:</strong> 
+                Old Rating: ${data.oldRating}, 
+                New Rating: ${data.newRating}, 
+                Change: ${data.change > 0 ? "+" : ""}${data.change}
+            </li>
+        `;
+  });
+
+  analysisHTML += `</ul></div>`;
+  return analysisHTML;
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const submitButton = document.querySelector("#usernameform button");
 
   submitButton.addEventListener("click", async (event) => {
     event.preventDefault();
+
     const userNameInput = document.querySelector("#username");
+    const difficultySelect = document.querySelector("#difficulty");
+    const topicInput = document.querySelector("#topic-dropdown");
+
     const userName = userNameInput.value.trim();
-
-    const topicInput = document.querySelector("#topic");
-    const topic = topicInput.value.trim();
-
-    const difficultyInput = document.querySelector("#difficulty");
-    const difficulty = difficultyInput.value.trim();
+    const difficulty = difficultySelect.value; // Corrected to get value
+    const topic = topicInput.value.trim().toLowerCase(); // Corrected to get value
 
     if (!userName) {
       alert("Please enter a username");
@@ -22,14 +107,23 @@ document.addEventListener("DOMContentLoaded", () => {
       const userRatings = await fetchUserRatings(userName);
       const solvedCount = await fetchSolvedProblems(
         userName,
-        topic,
-        difficulty
+        difficulty,
+        topic
       );
 
       if (userInfo.status === "OK" && userRatings.status === "OK") {
-        displayUserInfo(userInfo.result[0], userName, solvedCount);
+        displayUserInfo(
+          userInfo.result[0],
+          userName,
+          solvedCount,
+          difficulty,
+          topic
+        ); // Pass difficulty and topic correctly
         displayLatestUserRating(userRatings.result);
         plotRatingsChart(userRatings.result);
+
+        const analysisHTML = analyzeProgress(userRatings.result);
+        document.getElementById("analysis").innerHTML = analysisHTML;
       } else {
         alert("Username Not Found on Codeforces!!!");
       }
@@ -52,7 +146,7 @@ async function fetchUserRatings(userName) {
   return await response.json();
 }
 
-async function fetchSolvedProblems(userName, topic, difficulty) {
+async function fetchSolvedProblems(userName, difficulty, topic) {
   const BaseURL = `https://codeforces.com/api/user.status?handle=${userName}`;
   let response = await fetch(BaseURL);
   const data = await response.json();
@@ -62,28 +156,40 @@ async function fetchSolvedProblems(userName, topic, difficulty) {
 
   const submissions = data.result;
   const solvedProblems = new Set();
-  let topicSolvedCount = 0;
+
+  // Define difficulty ranges based on labels
+  const difficultyRange = {
+    easy: { min: 800, max: 1200 },
+    medium: { min: 1201, max: 1800 },
+    hard: { min: 1801, max: 10000 },
+  };
+
+  const selectedRange = difficultyRange[difficulty];
 
   submissions.forEach((submission) => {
-    if (submission.verdict === "OK") {
+    if (submission.verdict === "OK" && submission.problem.rating) {
       const problemId = `${submission.problem.contestId}-${submission.problem.index}`;
-      const problemTags = submission.problem.tags;
-      const problemDifficulty = submission.problem.rating || 0; // If there's no rating, treat it as 0.
+      const problemRating = submission.problem.rating;
 
+      // Check if problem falls within the difficulty range and contains the topic tag
       if (
-        problemTags.includes(topic) &&
-        (!difficulty || problemDifficulty === parseInt(difficulty))
+        problemRating >= selectedRange.min &&
+        problemRating <= selectedRange.max
       ) {
-        solvedProblems.add(problemId);
-        topicSolvedCount++;
+        if (
+          submission.problem.tags.some((tag) => tag.toLowerCase() === topic)
+        ) {
+          solvedProblems.add(problemId);
+        }
       }
     }
   });
-  return topicSolvedCount;
+
+  return solvedProblems.size;
 }
 
-function displayUserInfo(userInfo, userName, solvedCount) {
-  const container = document.getElementById("container");
+function displayUserInfo(userInfo, userName, solvedCount, difficulty, topic) {
+  const container = document.getElementById("userInfo");
   container.innerHTML = `
         <h2 class="title is-4 has-text-centered">User Info</h2>
         <div class="card mb-4">
@@ -121,118 +227,77 @@ function displayUserInfo(userInfo, userName, solvedCount) {
                     <p><strong>Registration:</strong> ${convertUnixTimeToNormalTime(
                       userInfo.registrationTimeSeconds
                     )}</p>
-                    <p><strong>Problems Solved on "${topic}" (${
-    difficulty ? `Difficulty: ${difficulty}` : "All Difficulties"
-  }):</strong> ${solvedCount}</p>
+                    <p><strong>Problems Solved (Difficulty: ${difficulty}, Topic: ${topic}):</strong> ${solvedCount}</p>
                 </div>
             </div>
         </div>
     `;
 }
 
-function displayLatestUserRating(userRatings) {
-  const container = document.getElementById("container");
-  const latestRating = userRatings[userRatings.length - 1];
+// Other existing functions like displayLatestUserRating and plotRatingsChart would remain unchanged
 
-  container.innerHTML += `
-        <h2 class="title is-4 has-text-centered">Latest User Rating</h2>
-        <div class="card mb-4 ${
-          document.body.classList.contains("dark-mode")
-            ? "dark-mode"
-            : "light-mode"
-        }">
-            <header class="card-header">
-                <p class="card-header-title">
-                    Contest: ${latestRating.contestName}
-                </p>
-            </header>
-            <div class="card-content">
-                <div class="content">
-                    <p><strong>Contest ID:</strong> ${
-                      latestRating.contestId
-                    }</p>
-                    <p><strong>Rank:</strong> ${latestRating.rank}</p>
-                    <p><strong>Old Rating:</strong> ${
-                      latestRating.oldRating
-                    }</p>
-                    <p><strong>New Rating:</strong> ${
-                      latestRating.newRating
-                    }</p>
-                    <p><strong>Performance:</strong> ${
-                      latestRating.performance
-                    }</p>
-                    <p><strong>Rating Change:</strong> ${
-                      latestRating.newRating - latestRating.oldRating
-                    }</p>
-                </div>
-            </div>
+function displayLatestUserRating(ratingData) {
+  const container = document.getElementById("latestRating");
+  const latestContest = ratingData[ratingData.length - 1];
+
+  const contestHTML = `
+        <h2 class="title is-4 has-text-centered">Latest Contest</h2>
+        <div class="box">
+            <p><strong>Contest Name:</strong> ${latestContest.contestName}</p>
+            <p><strong>Rank:</strong> ${latestContest.rank}</p>
+            <p><strong>Old Rating:</strong> ${latestContest.oldRating}</p>
+            <p><strong>New Rating:</strong> ${latestContest.newRating}</p>
         </div>
     `;
+
+  container.innerHTML += contestHTML;
 }
 
-function plotRatingsChart(userRatings) {
-  const container = document.getElementById("container");
-  container.innerHTML += `
-        <h2 class="title is-4 has-text-centered">Rating Progression Chart</h2>
-        <div class="card mb-4 ${
-          document.body.classList.contains("dark-mode")
-            ? "dark-mode"
-            : "light-mode"
-        }">
-            <div class="card-content">
-                <canvas id="ratingsChart"></canvas>
-            </div>
-        </div>
-    `;
+function plotRatingsChart(ratingData) {
+  const container = document.getElementById("contestGraph");
+  const canvas = document.createElement("canvas");
+  canvas.id = "ratingsChart";
+  container.appendChild(canvas);
 
-  const ctx = document.getElementById("ratingsChart").getContext("2d");
+  const labels = ratingData.map((item) => {
+    // Convert startTimeSeconds to a Date object
+    const contestDate = new Date(item.startTimeSeconds * 1000);
 
-  const labels = userRatings.map((rating) => {
-    const date = new Date(rating.ratingUpdateTimeSeconds * 1000);
-    return `${date.getDate()}-${date.getMonth() + 1}-${date.getFullYear()}`;
+    // Check if the date is valid
+    if (isNaN(contestDate)) {
+      console.error(`Invalid date for contest: ${item.contestName}`);
+      return "Invalid Date"; // Fallback label
+    }
+
+    return contestDate.toLocaleDateString(); // Format the date as needed
   });
 
-  const data = userRatings.map((rating) => rating.newRating);
+  const ratings = ratingData.map((item) => item.newRating);
 
-  new Chart(ctx, {
+  new Chart(canvas.getContext("2d"), {
     type: "line",
     data: {
       labels: labels,
       datasets: [
         {
-          label: "Rating",
-          data: data,
+          label: "User Ratings Over Time",
+          data: ratings,
           borderColor: "rgba(75, 192, 192, 1)",
-          borderWidth: 2,
           fill: false,
-          pointBackgroundColor: "rgba(75, 192, 192, 1)",
-          pointBorderColor: "#fff",
-          pointHoverBackgroundColor: "#fff",
-          pointHoverBorderColor: "rgba(75, 192, 192, 1)",
+          tension: 0.1,
         },
       ],
     },
     options: {
-      responsive: true,
       scales: {
-        x: {
-          display: true,
-          title: {
-            display: true,
-            text: "Date",
-          },
-        },
-        y: {
-          display: true,
-          title: {
-            display: true,
-            text: "Rating",
-          },
-        },
+        x: { display: true, title: { display: true, text: "Date" } },
+        y: { display: true, title: { display: true, text: "Rating" } },
       },
     },
   });
 }
+
+populateTagsDropdown();
 
 function convertUnixTimeToNormalTime(unixTimestamp) {
   if (isNaN(unixTimestamp)) {

@@ -21,8 +21,6 @@
         />
       </div>
     </header>
-
-    <!-- Form for username input -->
     <form
       id="usernameform"
       class="box field is-grouped is-grouped-centered mt-3"
@@ -52,9 +50,35 @@
           </div>
         </div>
       </div>
+
+      <div class="field">
+        <label class="label">Select Difficulty:</label>
+        <div class="control">
+          <div class="select is-rounded">
+            <select id="difficulty">
+              <option value="easy">Easy</option>
+              <option value="medium">Medium</option>
+              <option value="hard">Hard</option>
+            </select>
+          </div>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="topic" class="label">Topic:</label>
+        <div class="control">
+          <div class="select is-rounded">
+            <select id="topic-dropdown">
+              <!-- Options will be added here dynamically -->
+            </select>
+          </div>
+        </div>
+      </div>
     </form>
 
-    <!-- Container to display the fetched user info, rating data, and chart -->
-    <div id="container" class="container mt-5"></div>
+    <div id="userInfo" class="container mt-5"></div>
+    <div id="latestRating" class="container mt-5"></div>
+    <div id="contestGraph" class="container mt-5"></div>
+    <div id="analysis" class="container mt-5"></div>
   </body>
 </html>
