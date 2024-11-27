@@ -1,3 +1,5 @@
+// ADD TAGS TO THE DROPDOWN FUNCTIONALITY
+
 async function populateTagsDropdown() {
   const url = "https://codeforces.com/api/problemset.problems";
   try {
@@ -30,6 +32,8 @@ async function populateTagsDropdown() {
     console.error("Error fetching tags:", error);
   }
 }
+
+// LAST 5 CONTEST ANALYSIS
 
 function analyzeProgress(ratingData) {
   if (ratingData.length === 0) {
@@ -83,6 +87,105 @@ function analyzeProgress(ratingData) {
   return analysisHTML;
 }
 
+async function fetchSolvedProblemsData(userName) {
+  const url = `https://codeforces.com/api/user.status?handle=${userName}`;
+  try {
+    const response = await fetch(url);
+    const data = await response.json();
+    if (data.status !== "OK") throw new Error("Error fetching user data");
+
+    return data.result.filter((submission) => submission.verdict === "OK");
+  } catch (error) {
+    console.error("Error fetching solved problems data:", error);
+    return [];
+  }
+}
+
+async function plotSolvedProblemsHeatmap(userName) {
+  const submissions = await fetchSolvedProblemsData(userName);
+
+  // Group solved problems by year, month, and difficulty
+  const groupedData = {};
+  submissions.forEach((submission) => {
+    if (!submission.problem.rating) return; // Ignore problems without ratings
+
+    const date = new Date(submission.creationTimeSeconds * 1000);
+    const monthYear = `${date.getFullYear()}-${(date.getMonth() + 1)
+      .toString()
+      .padStart(2, "0")}`;
+    const rating = submission.problem.rating;
+
+    if (!groupedData[monthYear]) {
+      groupedData[monthYear] = {
+        easy: 0,
+        medium: 0,
+        hard: 0,
+      };
+    }
+
+    if (rating <= 1200) groupedData[monthYear].easy++;
+    else if (rating <= 1800) groupedData[monthYear].medium++;
+    else groupedData[monthYear].hard++;
+  });
+
+  // Prepare the data for the heatmap
+  const labels = Object.keys(groupedData);
+  const easyData = labels.map((label) => groupedData[label].easy);
+  const mediumData = labels.map((label) => groupedData[label].medium);
+  const hardData = labels.map((label) => groupedData[label].hard);
+
+  const ctx = document.getElementById("heatmapCanvas").getContext("2d");
+
+  new Chart(ctx, {
+    type: "bar",
+    data: {
+      labels: labels, // Month-Year labels
+      datasets: [
+        {
+          label: "Easy Problems",
+          data: easyData,
+          backgroundColor: "rgba(75, 192, 192, 0.8)",
+          stack: "Stack 0",
+        },
+        {
+          label: "Medium Problems",
+          data: mediumData,
+          backgroundColor: "rgba(255, 159, 64, 0.8)",
+          stack: "Stack 0",
+        },
+        {
+          label: "Hard Problems",
+          data: hardData,
+          backgroundColor: "rgba(255, 99, 132, 0.8)",
+          stack: "Stack 0",
+        },
+      ],
+    },
+    options: {
+      scales: {
+        x: {
+          title: {
+            display: true,
+            text: "Month-Year",
+          },
+        },
+        y: {
+          title: {
+            display: true,
+            text: "Number of Problems Solved",
+          },
+          beginAtZero: true,
+        },
+      },
+      plugins: {
+        legend: {
+          display: true,
+        },
+      },
+    },
+  });
+}
+
 document.addEventListener("DOMContentLoaded", () => {
   const submitButton = document.querySelector("#usernameform button");
 
@@ -118,12 +221,14 @@ document.addEventListener("DOMContentLoaded", () => {
           solvedCount,
           difficulty,
           topic
-        ); // Pass difficulty and topic correctly
+        ); // Pass difficulty and topic
         displayLatestUserRating(userRatings.result);
         plotRatingsChart(userRatings.result);
 
         const analysisHTML = analyzeProgress(userRatings.result);
         document.getElementById("analysis").innerHTML = analysisHTML;
+
+        plotSolvedProblemsHeatmap(userName);
       } else {
         alert("Username Not Found on Codeforces!!!");
       }
@@ -234,7 +339,7 @@ function displayUserInfo(userInfo, userName, solvedCount, difficulty, topic) {
     `;
 }
 
-// Other existing functions like displayLatestUserRating and plotRatingsChart would remain unchanged
+// displayLatestUserRating and plotRatingsChart
 
 function displayLatestUserRating(ratingData) {
   const container = document.getElementById("latestRating");
